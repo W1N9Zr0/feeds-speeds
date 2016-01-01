@@ -62,12 +62,12 @@ function drawTables() {
 			var row = document.createElement("tr");
 
 			var name = document.createElement("td");
-			name.innerText = mat.name;
+			name.textContent = mat.name;
 			name.style.textAlign = "left";
 			row.appendChild(name);
 
 			var sfm = document.createElement("td");
-			sfm.innerText = mat.sfm;
+			sfm.textContent = mat.sfm;
 			sfm.style.background = colorFunc(mat.sfm);
 			row.appendChild(sfm);
 
@@ -146,11 +146,11 @@ function drawTables() {
 		var row = document.createElement("tr");
 
 		var name = document.createElement("td");
-		name.innerText = speed.pulley;
+		name.textContent = speed.pulley;
 		row.appendChild(name);
 
 		var sfm = document.createElement("td");
-		sfm.innerText = speed.rpm;
+		sfm.textContent = speed.rpm;
 		sfm.style.background = rpmColorMap(speed.rpm);
 		row.appendChild(sfm);
 
@@ -203,7 +203,7 @@ function fillTable(tbody, rows, columns, rheadFunc, cellFunc, colorFunc) {
 		for (var c = 0; c < columns.length; c++) {
 			var cell = document.createElement("td");
 			value = cellFunc(rows[r], columns[c]);
-			cell.innerText = value;
+			cell.textContent = value;
 			cell.style.backgroundColor = colorFunc(value);
 			row.appendChild(cell);
 		}
