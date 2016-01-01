@@ -239,8 +239,8 @@ function parseFraction(x) {
 	}
 	if (parts.length > 0) {
 		var fractionParts = parts[0].split("/");
-		num = fractionParts[0];
-		denom = fractionParts[1];
+		num = Number(fractionParts[0]);
+		denom = Number(fractionParts[1]);
 	}
 	var value = new FractionalSize(whole, num, denom);
 	return value;
