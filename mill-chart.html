@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Machining speed lookup table generator</title>
+	<style>
+.list-container {
+	float: left;
+	margin: 1px;
+}
+table {
+	border: solid 1px;
+	margin: 1px;
+}
+td {
+	text-align: right;
+}
+	</style>
+	<script>
+function drawTables() {
+	// Read input boxes
+	var speeds = document.getElementById("speeds").value
+		.split(/\n/)
+		.map(function(x) {
+			var parts = x.split(/,/);
+			var speed = {};
+			speed.rpm = Number(parts[0]);
+			speed.pulley = parts[1];
+			return speed;
+		});
+
+	var rpms = speeds
+		.map(function(speed){ return speed.rpm; })
+		.sort(numericSort);
+
+	var materials = document.getElementById("mats").value
+		.split(/\n/)
+		.map(function(x) {
+			var parts = x.split(/,/);
+			var mat = {};
+			mat.name = parts[0];
+			mat.sfm = Number(parts[1]);
+			return mat;
+		});
+
+	var matSfms = materials
+		.map(function(m){return m.sfm;})
+		.sort(numericSort);
+
+	var tools = document.getElementById("tools").value
+		.split(/\n/)
+		.map(parseFraction);
+
+	var makeMaterialLegend = function(table, colorFunc) {
+		table.innerHTML = "";
+		var sfmLhead = document.createElement("tr");
+		sfmLhead.appendChild(makeTh("Material"));
+		sfmLhead.appendChild(makeTh("SFM"));
+		table.appendChild(sfmLhead);
+		for(var i in materials) {
+			var mat = materials[i];
+			var row = document.createElement("tr");
+
+			var name = document.createElement("td");
+			name.innerText = mat.name;
+			name.style.textAlign = "left";
+			row.appendChild(name);
+
+			var sfm = document.createElement("td");
+			sfm.innerText = mat.sfm;
+			sfm.style.background = colorFunc(mat.sfm);
+			row.appendChild(sfm);
+
+			table.appendChild(row);
+		}
+	}
+
+	// Draw RPM->SFM table
+	var minSfm = Math.min.apply(null, matSfms);
+	var maxSfm = Math.max.apply(null, matSfms);
+
+	var sfmFormula = function(tool, rpm)
+	{
+		return Math.round(tool.value() * rpm * Math.PI / 12);
+	};
+
+	var sfmColorMap = function(sfm, mapUp)
+	{
+		if (sfm > maxSfm) // sfm too high for any material!
+			return null;
+		//var mapped = 1 - mapRange(sfm, minSfm, maxSfm);
+		var mapped = mapNearest(sfm, matSfms, mapUp);
+		// Math.pow with magic number to spread out colors
+		return hslMap(
+			Math.pow(mapped, inputNumber("sfm-color-magic")),
+			inputNumber("sfm-color-offset"),
+			inputNumber("sfm-color-range")
+		);
+	};
+
+	var sfmLegend = document.getElementById("sfm-legend");
+	makeMaterialLegend(sfmLegend, sfmColorMap);
+
+	var sfmTable = document.getElementById("sfm-table");
+	toolTable(sfmTable, "SFM from RPM", tools, "RPM", rpms, sfmFormula,
+		function(sfm) { return sfmColorMap(sfm, true); }
+	);
+
+	// Draw SFM->RPM table
+	var uniquesfm = matSfms
+		.filter(onlyUnique)
+		.sort(numericSort);
+
+	var minRpm = Math.min.apply(null, rpms);
+	var maxRpm = Math.max.apply(null, rpms);
+
+	var rpmFormula = function(tool, sfm)
+	{
+		return Math.round(sfm / tool.value() / Math.PI * 12);
+	};
+
+	var rpmColorMap = function(rpm)
+	{
+		if (rpm < minRpm) // all the speeds are too fast!
+			return null;
+		//var mapped = mapRange(rpm, minRpm, maxRpm);
+		var mapped = mapNearest(rpm, rpms);
+		// Math.pow with magic number to spread out colors
+		return hslMap(Math.pow(mapped, inputNumber("rpm-color-magic")),
+			inputNumber("rpm-color-offset"),
+			inputNumber("rpm-color-range")
+		);
+	};
+
+	var sfmMatLegend = document.getElementById("rpm-mat-legend");
+	makeMaterialLegend(sfmMatLegend, function() {});
+
+	var rpmLegend = document.getElementById("rpm-legend");
+	rpmLegend.innerHTML = "";
+	var sfmLhead = document.createElement("tr");
+	sfmLhead.appendChild(makeTh("Pulley"));
+	sfmLhead.appendChild(makeTh("RPM"));
+	rpmLegend.appendChild(sfmLhead);
+	for(var i in speeds) {
+		var speed = speeds[i];
+		var row = document.createElement("tr");
+
+		var name = document.createElement("td");
+		name.innerText = speed.pulley;
+		row.appendChild(name);
+
+		var sfm = document.createElement("td");
+		sfm.innerText = speed.rpm;
+		sfm.style.background = rpmColorMap(speed.rpm);
+		row.appendChild(sfm);
+
+		rpmLegend.appendChild(row);
+	}
+	var rpmTable = document.getElementById("rpm-table");
+	toolTable(rpmTable, "RPM from SFM", tools, "SFM", uniquesfm, rpmFormula, rpmColorMap);
+}
+
+function toolTable(table, name, tools, colName, columns, cellFunc, colorFunc) {
+	table.innerHTML = "";
+
+	var head = document.createElement("thead")
+	table.appendChild(head);
+
+	var headTr1 = document.createElement("tr");
+	headTr1.appendChild(makeTh(name, columns.length + 2));
+	head.appendChild(headTr1);
+
+	var headTr2 = document.createElement("tr");
+	headTr2.appendChild(makeTh("Tool Diameter", 2));
+	headTr2.appendChild(makeTh(colName, columns.length));
+	head.appendChild(headTr2);
+
+	var headTr3 = document.createElement("tr");
+	headTr3.appendChild(makeTh("Fraction"));
+	headTr3.appendChild(makeTh("Decimal"));
+	for (var c = 0; c < columns.length; c++) {
+		headTr3.appendChild(makeTh(columns[c]));
+	}
+	head.appendChild(headTr3);
+
+	var body = document.createElement("tbody");
+	table.appendChild(body);
+
+	fillTable(body, tools, columns,
+		function(tool, tr) {
+			tr.appendChild(makeTh( tool.toString() ));
+			tr.appendChild(makeTh( tool.value().toFixed(4) ));
+		},
+		cellFunc,
+		colorFunc
+	);
+}
+
+function fillTable(tbody, rows, columns, rheadFunc, cellFunc, colorFunc) {
+	for (var r = 0; r < rows.length; r++) {
+		var row = document.createElement("tr");
+		rheadFunc(rows[r], row);
+		for (var c = 0; c < columns.length; c++) {
+			var cell = document.createElement("td");
+			value = cellFunc(rows[r], columns[c]);
+			cell.innerText = value;
+			cell.style.backgroundColor = colorFunc(value);
+			row.appendChild(cell);
+		}
+		tbody.appendChild(row);
+	}
+}
+
+var FractionalSize = function(whole, num, denom) {
+	this.whole = whole;
+	this.num = num;
+	this.denom = denom;
+}
+FractionalSize.prototype.value = function() {
+	return this.whole + this.num / this.denom;
+};
+FractionalSize.prototype.toString = function() {
+	var result = "";
+	if (this.whole != 0)
+		result = this.whole;
+	if (this.num != 0)
+		result += " " + this.num + "/" + this.denom;
+	return result;
+}
+
+function parseFraction(x) {
+	var parts = x.split(/[ -]+/);
+	var whole = 0
+	var num = 0;
+	var denom = 1;
+	if (parts[0].indexOf("/") == -1) {
+		whole = Number(parts[0]);
+		parts.shift();
+	}
+	if (parts.length > 0) {
+		var fractionParts = parts[0].split("/");
+		num = fractionParts[0];
+		denom = fractionParts[1];
+	}
+	var value = new FractionalSize(whole, num, denom);
+	return value;
+}
+
+function makeTh(name, colspan) {
+	var th = document.createElement("th");
+	th.appendChild(document.createTextNode(name));
+
+	if (typeof colspan !== 'undefined')
+		th.colSpan = colspan;
+
+	return th;
+}
+
+function numericSort(a, b) {
+	return a - b;
+};
+
+function onlyUnique(value, index, self) {
+	return self.indexOf(value) === index;
+}
+
+function clamp(num, min, max) {
+	return num < min ? min : num > max ? max : num;
+}
+
+function mapRange(value, min, max) {
+	return (value - min) / (max - min);
+}
+
+function mapNearest(value, increasingList, mapUp) {
+	var count = increasingList.length;
+	var i;
+	for (i = 0; i < count; i++) {
+		if (increasingList[i] > value || (mapUp && increasingList[i] == value))
+			break;
+	}
+	if (!mapUp)
+		i--;
+	//return (i) / count;
+	var v = mapRange(
+		increasingList[i],
+		increasingList[0],
+		increasingList[increasingList.length-1]);
+	return v;
+}
+
+function hslMap(value, shift, range) {
+	if (!range)
+		range = 300;
+
+	var hue = clamp(value, 0, 1) * range;
+	if (shift)
+		hue += shift;
+	return "hsl(" + hue + ",100%,75%)";
+}
+
+function inputNumber(id) {
+	return Number(document.getElementById(id).value);
+}
+	</script>
+</head>
+<body onload="drawTables();">
+	<form>
+		<div class="list-container">
+			Speeds (rpm,pulley)</br>
+			<textarea id="speeds" rows="10" cols="30">
+2760,A-3
+2220,B-3
+1600,A-2
+1320,C-3
+1280,B-2
+730,A-1
+520,D-2
+360,C-1
+240,D-1</textarea>
+		</div>
+		<div class="list-container">
+			Materials (name,sfm)</br>
+			<textarea id="mats" rows="10" cols="30">
+Aluminum,300
+Aluminum - drill,300
+Brass,400
+Brass - drill,200
+Bronze,150
+Bronze - drill,200
+Copper,100
+Copper - drill,70
+Steel(mild),90
+Steel(mild) - drill,110
+Steel(cast),80
+Steel(cast) - drill,50
+Steel(tool),50
+Steel(tool) - drill,60
+Stainless,60
+Stainless - drill,30
+Iron,65
+Iron - drill,100</textarea>
+		</div>
+		<div class="list-container">
+			Tool sizes (mixed fraction inches)</br>
+			<textarea id="tools" rows="10" cols="30">
+1/32
+3/64
+1/16
+1/8
+3/16
+1/4
+5/16
+3/8
+7/16
+1/2
+9/16
+5/8
+3/4
+7/8
+1
+1  1/4
+1  1/2
+1  3/4
+2
+2  1/4
+2  1/2
+2  3/4
+3
+3  1/4
+3  1/2
+3  3/4
+4
+4  1/2
+5
+6</textarea>
+		</div>
+		<div class="list-container">
+			Color mapping parameters<br/>
+			SFM exponent<input id="sfm-color-magic" value="0.6" /><br/>
+			SFM range<input id="sfm-color-range" value="300" /><br/>
+			SFM offset<input id="sfm-color-offset" value="120" /><br/>
+			<br/>
+			RPM exponent<input id="rpm-color-magic" value="0.7" /><br/>
+			RPM range<input id="rpm-color-range" value="300" /><br/>
+			RPM offset<input id="rpm-color-offset" value="0" /><br/>
+		</div>
+		<br style="clear:both" />
+		<div>
+			<button type="submit" onclick="drawTables(); return false;">Update Tables</button>
+			Note: Tables do not use the same legend!
+		</div>
+		<div class="list-container" style="border: solid">
+			<table id="sfm-legend" style="float:left"></table>
+			<table id="sfm-table"></table>
+		</div>
+		<div class="list-container" style="border: solid">
+			<div style="float:left">
+				<table id="rpm-mat-legend"></table>
+				<table id="rpm-legend"></table>
+			</div>
+			<table id="rpm-table"></table>
+		</div>
+	</form>
+</body>
+</html>
