@@ -4,9 +4,9 @@
 	<meta charset="utf-8" />
 	<title>Machining speed lookup table generator</title>
 	<style>
-.list-container {
-	float: left;
-	margin: 1px;
+.inline-block {
+	display: inline-block;
+	vertical-align: top;
 }
 table {
 	border: solid 1px;
@@ -306,7 +306,7 @@ function inputNumber(id) {
 </head>
 <body onload="drawTables();">
 	<form>
-		<div class="list-container">
+		<div class="inline-block">
 			Speeds (rpm,pulley)</br>
 			<textarea id="speeds" rows="10" cols="30">
 2760,A-3
@@ -319,7 +319,7 @@ function inputNumber(id) {
 360,C-1
 240,D-1</textarea>
 		</div>
-		<div class="list-container">
+		<div class="inline-block">
 			Materials (name,sfm)</br>
 			<textarea id="mats" rows="10" cols="30">
 Aluminum,300
@@ -341,7 +341,7 @@ Stainless - drill,30
 Iron,65
 Iron - drill,100</textarea>
 		</div>
-		<div class="list-container">
+		<div class="inline-block">
 			Tool sizes (mixed fraction inches)</br>
 			<textarea id="tools" rows="10" cols="30">
 1/32
@@ -375,7 +375,7 @@ Iron - drill,100</textarea>
 5
 6</textarea>
 		</div>
-		<div class="list-container">
+		<div class="inline-block">
 			Color mapping parameters<br/>
 			SFM exponent<input id="sfm-color-magic" value="0.6" /><br/>
 			SFM range<input id="sfm-color-range" value="300" /><br/>
@@ -385,21 +385,20 @@ Iron - drill,100</textarea>
 			RPM range<input id="rpm-color-range" value="300" /><br/>
 			RPM offset<input id="rpm-color-offset" value="0" /><br/>
 		</div>
-		<br style="clear:both" />
 		<div>
 			<button type="submit" onclick="drawTables(); return false;">Update Tables</button>
 			Note: Tables do not use the same legend!
 		</div>
-		<div class="list-container" style="border: solid">
-			<table id="sfm-legend" style="float:left"></table>
-			<table id="sfm-table"></table>
+		<div class="inline-block" style="border: solid">
+			<table id="sfm-legend" class="inline-block"></table>
+			<table id="sfm-table" class="inline-block"></table>
 		</div>
-		<div class="list-container" style="border: solid">
-			<div style="float:left">
+		<div class="inline-block" style="border: solid">
+			<div class="inline-block">
 				<table id="rpm-mat-legend"></table>
 				<table id="rpm-legend"></table>
 			</div>
-			<table id="rpm-table"></table>
+			<table id="rpm-table" class="inline-block"></table>
 		</div>
 	</form>
 </body>
