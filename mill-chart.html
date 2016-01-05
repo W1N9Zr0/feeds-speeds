@@ -293,6 +293,21 @@ function hslMap(value, shift, range) {
 function inputNumber(id) {
 	return Number(document.getElementById(id).value);
 }
+
+var partyTimer;
+function partyToggle() {
+	if (partyTimer) {
+		window.clearInterval(partyTimer);
+		partyTimer = false;
+	} else {
+		partyTimer = window.setInterval(party, 10);
+	}
+}
+function party() {
+	document.getElementById("rpm-color-offset").value = (inputNumber("rpm-color-offset") + 5) % 360;
+	document.getElementById("sfm-color-offset").value = (inputNumber("sfm-color-offset") + 10) % 360;
+	drawTables();
+}
 	</script>
 </head>
 <body onload="drawTables();">
@@ -379,6 +394,7 @@ Iron - drill,100</textarea>
 		<div>
 			<button type="submit" onclick="drawTables(); return false;">Update Tables</button>
 			Note: Tables do not use the same legend!
+			<button onclick="partyToggle(); return false;">Party Mode!</button>
 		</div>
 		<div class="inline-block" style="border: solid">
 			<table id="sfm-legend" class="inline-block"></table>
