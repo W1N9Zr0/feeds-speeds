@@ -17,16 +17,17 @@ td {
 }
 	</style>
 	<script>
+"use strict";
 function drawTables() {
 	// Read input boxes
 	var speeds = document.getElementById("speeds").value
 		.split(/\n/)
 		.map(function(x) {
 			var parts = x.split(/,/);
-			var speed = {};
-			speed.rpm = Number(parts[0]);
-			speed.pulley = parts[1];
-			return speed;
+			return {
+				rpm: Number(parts[0]),
+				pulley: parts[1]
+			};
 		});
 
 	var rpms = speeds
@@ -37,27 +38,27 @@ function drawTables() {
 		.split(/\n/)
 		.map(function(x) {
 			var parts = x.split(/,/);
-			var mat = {};
-			mat.name = parts[0];
-			mat.sfm = Number(parts[1]);
-			return mat;
+			return {
+				name: parts[0],
+				sfm: Number(parts[1])
+			};
 		});
 
 	var matSfms = materials
-		.map(function(m){return m.sfm;})
+		.map(function(m){ return m.sfm; })
 		.sort(numericSort);
 
 	var tools = document.getElementById("tools").value
 		.split(/\n/)
-		.map(parseFraction);
+		.map(FractionalSize.parse);
 
-	var makeMaterialLegend = function(table, colorFunc) {
+	function makeMaterialLegend(table, colorFunc) {
 		table.innerHTML = "";
 		var sfmLhead = document.createElement("tr");
 		sfmLhead.appendChild(makeTh("Material"));
 		sfmLhead.appendChild(makeTh("SFM"));
 		table.appendChild(sfmLhead);
-		for(var i in materials) {
+		for(var i = 0; i < materials.length; i++) {
 			var mat = materials[i];
 			var row = document.createElement("tr");
 
@@ -79,12 +80,12 @@ function drawTables() {
 	var minSfm = Math.min.apply(null, matSfms);
 	var maxSfm = Math.max.apply(null, matSfms);
 
-	var sfmFormula = function(tool, rpm)
+	function sfmFormula(tool, rpm)
 	{
 		return Math.round(tool.value() * rpm * Math.PI / 12);
 	};
 
-	var sfmColorMap = function(sfm, mapUp)
+	function sfmColorMap(sfm, mapUp)
 	{
 		if (sfm > maxSfm) // sfm too high for any material!
 			return null;
@@ -114,12 +115,12 @@ function drawTables() {
 	var minRpm = Math.min.apply(null, rpms);
 	var maxRpm = Math.max.apply(null, rpms);
 
-	var rpmFormula = function(tool, sfm)
+	function rpmFormula(tool, sfm)
 	{
 		return Math.round(sfm / tool.value() / Math.PI * 12);
 	};
 
-	var rpmColorMap = function(rpm)
+	function rpmColorMap(rpm)
 	{
 		if (rpm < minRpm) // all the speeds are too fast!
 			return null;
@@ -141,7 +142,7 @@ function drawTables() {
 	sfmLhead.appendChild(makeTh("Pulley"));
 	sfmLhead.appendChild(makeTh("RPM"));
 	rpmLegend.appendChild(sfmLhead);
-	for(var i in speeds) {
+	for(var i = 0; i < speeds.length; i++) {
 		var speed = speeds[i];
 		var row = document.createElement("tr");
 
@@ -186,32 +187,23 @@ function toolTable(table, name, tools, colName, columns, cellFunc, colorFunc) {
 	var body = document.createElement("tbody");
 	table.appendChild(body);
 
-	fillTable(body, tools, columns,
-		function(tool, tr) {
-			tr.appendChild(makeTh( tool.toString() ));
-			tr.appendChild(makeTh( tool.value().toFixed(4) ));
-		},
-		cellFunc,
-		colorFunc
-	);
-}
-
-function fillTable(tbody, rows, columns, rheadFunc, cellFunc, colorFunc) {
-	for (var r = 0; r < rows.length; r++) {
+	for (var t = 0; t < tools.length; t++) {
 		var row = document.createElement("tr");
-		rheadFunc(rows[r], row);
+		row.appendChild(makeTh( tools[t].toString() ));
+		row.appendChild(makeTh( tools[t].value().toFixed(4) ));
+
 		for (var c = 0; c < columns.length; c++) {
 			var cell = document.createElement("td");
-			value = cellFunc(rows[r], columns[c]);
+			var value = cellFunc(tools[t], columns[c]);
 			cell.textContent = value;
 			cell.style.backgroundColor = colorFunc(value);
 			row.appendChild(cell);
 		}
-		tbody.appendChild(row);
+		body.appendChild(row);
 	}
 }
 
-var FractionalSize = function(whole, num, denom) {
+function FractionalSize(whole, num, denom) {
 	this.whole = whole;
 	this.num = num;
 	this.denom = denom;
@@ -227,8 +219,7 @@ FractionalSize.prototype.toString = function() {
 		result += " " + this.num + "/" + this.denom;
 	return result;
 }
-
-function parseFraction(x) {
+FractionalSize.parse = function(x) {
 	var parts = x.split(/[ -]+/);
 	var whole = 0
 	var num = 0;
@@ -248,7 +239,7 @@ function parseFraction(x) {
 
 function makeTh(name, colspan) {
 	var th = document.createElement("th");
-	th.appendChild(document.createTextNode(name));
+	th.textContent = name;
 
 	if (typeof colspan !== 'undefined')
 		th.colSpan = colspan;
