@@ -24,11 +24,9 @@ function drawTables() {
 		.split(/\n/)
 		.map(function(x) {
 			var parts = x.split(/,/);
-			return {
-				rpm: Number(parts[0]),
-				pulley: parts[1]
-			};
+			return new SpeedSetting(Number(parts[0]), parts[1]);
 		});
+	var sortedSpeeds = speeds.sort(function(a,b) { return a.rpm - b.rpm; });
 
 	var rpms = speeds
 		.map(function(speed){ return speed.rpm; })
@@ -80,9 +78,9 @@ function drawTables() {
 	var minSfm = Math.min.apply(null, matSfms);
 	var maxSfm = Math.max.apply(null, matSfms);
 
-	function sfmFormula(tool, rpm)
+	function sfmFormula(tool, speed)
 	{
-		return Math.round(tool.value() * rpm * Math.PI / 12);
+		return Math.round(tool.value() * speed.rpm * Math.PI / 12);
 	};
 
 	function sfmColorMap(sfm, mapUp)
@@ -103,7 +101,7 @@ function drawTables() {
 	makeMaterialLegend(sfmLegend, sfmColorMap);
 
 	var sfmTable = document.getElementById("sfm-table");
-	toolTable(sfmTable, "SFM from RPM", tools, "RPM", rpms, sfmFormula,
+	toolTable(sfmTable, "SFM from RPM", tools, "RPM", sortedSpeeds, sfmFormula,
 		function(sfm) { return sfmColorMap(sfm, true); }
 	);
 
@@ -237,9 +235,17 @@ FractionalSize.parse = function(x) {
 	return value;
 }
 
+function SpeedSetting(rpm, pulley) {
+	this.rpm = rpm;
+	this.pulley = pulley;
+}
+SpeedSetting.prototype.toString = function() {
+	return this.rpm + "\r\n" + this.pulley;
+}
+
 function makeTh(name, colspan) {
 	var th = document.createElement("th");
-	th.textContent = name;
+	th.innerText = name;
 
 	if (typeof colspan !== 'undefined')
 		th.colSpan = colspan;
