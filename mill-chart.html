@@ -4,6 +4,10 @@
 	<meta charset="utf-8" />
 	<title>Machining speed lookup table generator</title>
 	<style>
+html {
+	font-family: monospaced, sans-serif;
+	text-shadow: 0px 0px 4px white;
+}
 .inline-block {
 	display: inline-block;
 	vertical-align: top;
@@ -293,7 +297,7 @@ function hslMap(value, shift, range) {
 	var hue = clamp(value, 0, 1) * range;
 	if (shift)
 		hue += shift;
-	return "hsl(" + hue + ",100%,75%)";
+	return "hsl(" + hue + ",100%,60%)";
 }
 
 function inputNumber(id) {
