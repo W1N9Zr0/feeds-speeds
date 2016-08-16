@@ -19,6 +19,13 @@ table {
 td {
 	text-align: right;
 }
+@media print
+{
+    .no-print, .no-print *
+    {
+        display: none !important;
+    }
+}
 	</style>
 	<script>
 "use strict";
@@ -322,6 +329,7 @@ function party() {
 </head>
 <body onload="drawTables();">
 	<form>
+		<div class="no-print">
 		<div class="inline-block">
 			Speeds (rpm,pulley)<br/>
 			<textarea id="speeds" rows="10" cols="30">
@@ -405,6 +413,7 @@ Iron - drill,100</textarea>
 			<button type="submit" onclick="drawTables(); return false;">Update Tables</button>
 			Note: Tables do not use the same legend!
 			<button onclick="partyToggle(); return false;">Party Mode!</button>
+		</div>
 		</div>
 		<div class="inline-block" style="border: solid">
 			<table id="sfm-legend" class="inline-block"></table>
