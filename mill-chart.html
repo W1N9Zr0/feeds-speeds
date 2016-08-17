@@ -4,6 +4,7 @@
 	<meta charset="utf-8" />
 	<title>Machining speed lookup table generator</title>
 	<style>
+html, body { height:100%; }
 html {
 	font-family: monospaced, sans-serif;
 	text-shadow: 0px 0px 4px white;
@@ -415,16 +416,28 @@ Iron - drill,100</textarea>
 			<button onclick="partyToggle(); return false;">Party Mode!</button>
 		</div>
 		</div>
-		<div class="inline-block" style="border: solid">
-			<table id="sfm-legend" class="inline-block"></table>
+		<div class="inline-block">
 			<table id="sfm-table" class="inline-block"></table>
-		</div>
-		<div class="inline-block" style="border: solid">
 			<div class="inline-block">
-				<table id="rpm-mat-legend"></table>
-				<table id="rpm-legend"></table>
+			<table id="sfm-legend" class="inline-block"></table>
+				<div>
+					<img src="pulleys.png" style="zoom:65%;"></img>
+				</div>
 			</div>
+		</div>
+		<div class="inline-block">
 			<table id="rpm-table" class="inline-block"></table>
+			<div class="inline-block" style="width:265px;">
+				<div class="inline-block">
+					<table id="rpm-mat-legend"></table>
+				</div>
+				<div class="inline-block">
+					<table id="rpm-legend"></table>
+				</div>
+				<div>
+					<img src="pulleys.png" style="width: 100%;"></img>
+				</div>
+			</div>
 		</div>
 	</form>
 </body>
